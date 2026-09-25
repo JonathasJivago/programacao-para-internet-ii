@@ -66,7 +66,6 @@ def atualizar_usuario(id: int, usuario: UsuarioSchema):
 def criar_usuario(usuario: UsuarioSchema):
     usuario_com_id = UsuarioBD(id=len(banco) + 1, **usuario.model_dump())
     banco.append(usuario_com_id)
-    print(banco)
 
     return usuario_com_id
 
