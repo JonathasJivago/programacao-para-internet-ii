@@ -8,6 +8,8 @@ dependencies = [
     "anyio>=4.15.1",
     "fastapi[standard]>=0.141.1",
     "httpx>=0.28.1",
+    "psycopg[binary]>=3.3.6",
+    "sqlalchemy>=2.1.6",
     "starlette>=1.7.0",
 ]
 
