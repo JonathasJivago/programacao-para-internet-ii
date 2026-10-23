@@ -22,4 +22,6 @@ def session():
         yield session
 
     table_registry.metadata.drop_all(engine)
+    session.close()
+    engine.dispose()
 

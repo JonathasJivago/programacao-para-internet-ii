@@ -12,6 +12,6 @@ def test_criar_usuario(session):
 
     usuarioBD = session.scalar(select(Usuario).where(Usuario.nome == "Clarice"))
 
-    breakpoint()
+   # breakpoint()
 
     assert usuarioBD.id == 1
