@@ -19,8 +19,8 @@ class UsuarioSchema(BaseModel):
     ]
     email: EmailStr
     senha: str
-    avaliacao: tuple[str, int]
-    notas: list[dict[str, float]]
+    # avaliacao: tuple[str, int]
+    # notas: list[dict[str, float]]
 
 
 class UsuarioBD(UsuarioSchema):
@@ -33,16 +33,16 @@ class UsuarioPublic(BaseModel):
     email: EmailStr
 
 
-usuario = {
-    'nome': 'Bob',
-    'email': 'bob@example.com',
-    'senha': '1236',
-    'avaliacao': ('Bom', 'texto'),
-    'notas': [{'nota1': 8.5}, {'nota2': 9.0}],
-}
+# usuario = {
+#     'nome': 'Bob',
+#     'email': 'bob@example.com',
+#     'senha': '1236',
+#     'avaliacao': ('Bom', 'texto'),
+#     'notas': [{'nota1': 8.5}, {'nota2': 9.0}],
+# }
 
-try:
-    u = UsuarioSchema(**usuario)
-    print('Usuário válido')
-except ValidationError as e:
-    print(e.errors())
+# try:
+#     u = UsuarioSchema(**usuario)
+#     print('Usuário válido')
+# except ValidationError as e:
+#     print(e.errors())

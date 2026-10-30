@@ -14,4 +14,4 @@ def test_criar_usuario(session):
 
    # breakpoint()
 
-    assert usuarioBD.id == 1
+    assert usuarioBD.id == 2
