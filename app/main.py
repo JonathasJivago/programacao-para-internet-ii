@@ -25,8 +25,9 @@ def home():
 
 
 @app.get('/usuarios', response_model=list[UsuarioPublic])
-def listar_usuarios() -> list[UsuarioPublic]:
-    return banco
+def listar_usuarios(session=Depends(get_session)):
+    usuarios = session.scalars(select(Usuario)).all()
+    return usuarios
 
 
 @app.get(
@@ -44,10 +45,10 @@ def teste(
 
 
 @app.get('/usuarios/{id}', status_code=HTTPStatus.OK, response_model=UsuarioPublic)
-def buscar_usuario_pelo_id(id: int):
-    for usuario in banco:
-        if id == usuario.id:
-            return usuario
+def buscar_usuario_pelo_id(id: int, session=Depends(get_session)):
+    usuario = session.scalar(select(Usuario).where(Usuario.id == id))
+    if usuario:
+        return usuario
 
     raise HTTPException(
         status_code=HTTPStatus.NOT_FOUND, detail='Usuário não encontrado'

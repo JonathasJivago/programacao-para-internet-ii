@@ -26,8 +26,8 @@ def test_criar_um_usuario(client, ):
         "email": "anaser@example.com",
         }
 
-def test_buscar_usuario(client):
-    response = client.get('/usuarios/1')
+def test_buscar_usuario(client, usuario):
+    response = client.get(f'/usuarios/{usuario.id}')
 
     assert response.status_code == HTTPStatus.OK
     
@@ -40,11 +40,11 @@ def test_buscar_usuario(client):
 
     assert response.json() == {
         "id": 1,
-        "nome": "Ana Souza",
-        "email": "anaser@example.com",
+        "nome": "Bob",
+        "email": "bob@example.com",
         }
 
-def test_buscar_usuario_invalido(client):
+def test_buscar_usuario_invalido(client, usuario):
     response = client.get('/usuarios/999')
 
     assert response.status_code == HTTPStatus.NOT_FOUND
@@ -53,3 +53,16 @@ def test_buscar_usuario_invalido(client):
 
     assert data['detail'] == 'Usuário não encontrado'
 
+def test_listar_usuarios(client, usuario):
+    response = client.get('/usuarios')
+
+    assert response.status_code == HTTPStatus.OK
+
+    data = response.json()
+
+    assert isinstance(data, list)
+
+    assert len(data) == 1
+    assert data[0]['id'] == 1
+    assert data[0]['nome'] == 'Bob'
+    assert data[0]['email'] == 'bob@example.com'

@@ -7,6 +7,7 @@ from app.models import table_registry
 from database import get_session
 import pytest
 from sqlalchemy.pool import StaticPool
+from app.models import Usuario
 
 @pytest.fixture
 def client(session):
@@ -23,7 +24,7 @@ def client(session):
 def session():
     engine = create_engine('sqlite:///:memory:', 
                            connect_args={"check_same_thread": False},
-                           poolClass=StaticPool)
+                           poolclass=StaticPool)
     
     table_registry.metadata.create_all(engine)
 
@@ -34,3 +35,10 @@ def session():
     session.close()
     engine.dispose()
 
+@pytest.fixture
+def usuario(session):
+    usuario = Usuario(nome="Bob", email="bob@example.com", senha="12345")
+    session.add(usuario)
+    session.commit()
+    session.refresh(usuario)
+    return usuario
