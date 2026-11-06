@@ -6,6 +6,8 @@ from fastapi import FastAPI, HTTPException, Query, Depends
 from schemas import Mensagem, UsuarioBD, UsuarioPublic, UsuarioSchema
 
 from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from app.models import Usuario
 
 from database import get_session
@@ -56,16 +58,26 @@ def buscar_usuario_pelo_id(id: int, session=Depends(get_session)):
 
 
 @app.put('/usuarios/{id}', response_model=UsuarioPublic)
-def atualizar_usuario(id: int, usuario: UsuarioSchema):
-    for i, u in enumerate(banco):
-        if u['id'] == id:
-            usuario_atualizado = UsuarioBD(id=id, **usuario.model_dump())
-            banco[i] = usuario_atualizado
-            return usuario_atualizado
+def atualizar_usuario(id: int, usuario: UsuarioSchema, session: Session = Depends(get_session)):
+    usuario_bd = session.scalar(select(Usuario).where(Usuario.id == id))
+    if usuario_bd:
+        if session.scalar(select(Usuario).where(Usuario.email == usuario.email)):
+            raise HTTPException(
+                    status_code=HTTPStatus.CONFLICT, detail='Email já cadastrado!'
+                )
+        else:
+            usuario_bd.nome = usuario.nome
+            usuario_bd.email = usuario.email
+            usuario_bd.senha = usuario.senha
 
-    raise HTTPException(
-        status_code=HTTPStatus.NOT_FOUND, detail='Usuário não encontrado'
-    )
+            session.add(usuario_bd)
+            session.commit()
+            session.refresh(usuario_bd)
+            return usuario_bd
+    else:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='Usuário não encontrado'
+        )
 
 
 @app.post('/usuarios', status_code=HTTPStatus.CREATED, response_model=UsuarioPublic)
@@ -94,14 +106,17 @@ def criar_usuario(usuario: UsuarioSchema, session=Depends(get_session)):
     # return usuario_com_id
 
 
-@app.delete('/usuarios/{id}', status_code=HTTPStatus.NO_CONTENT)
-def deletar_usuario(id: int):
+@app.delete('/usuarios/{id}', response_model=Mensagem)
+def deletar_usuario(id: int, session: Session = Depends(get_session)):
+    usuario_bd = session.get(Usuario, id)
 
-    for i, u in enumerate(banco):
-        if u['id'] == id:
-            del banco[i]
-            return
+    if not usuario_bd:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='Usuário não encontrado!'
+        )
+    else:
+        session.delete(usuario_bd)
+        session.commit()
+        
+        return Mensagem(mensagem="Usuário Excluido!")
 
-    raise HTTPException(
-        status_code=HTTPStatus.NOT_FOUND, detail='Usuário não encontrado'
-    )

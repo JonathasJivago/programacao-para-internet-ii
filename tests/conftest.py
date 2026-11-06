@@ -42,3 +42,20 @@ def usuario(session):
     session.commit()
     session.refresh(usuario)
     return usuario
+
+@pytest.fixture
+def lista(session):
+    lista = []
+    usuario = Usuario(nome="Bob", email="bob@example.com", senha="12345")
+    session.add(usuario)
+    session.commit()
+    session.refresh(usuario)
+    lista.append(usuario)
+    
+    usuario = Usuario(nome="Carol", email="carol@example.com", senha="12345")
+    session.add(usuario)
+    session.commit()
+    session.refresh(usuario)
+    lista.append(usuario)
+
+    return lista
