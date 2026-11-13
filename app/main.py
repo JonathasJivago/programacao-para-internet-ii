@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import FastAPI, HTTPException, Query, Depends
 
-from schemas import Mensagem, UsuarioBD, UsuarioPublic, UsuarioSchema
+from schemas import Mensagem, UsuarioBD, UsuarioPublic, UsuarioSchema, Token
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -12,7 +12,7 @@ from app.models import Usuario
 
 from database import get_session
 
-from security import get_password_hash
+from security import get_password_hash, verify_password, create_access_token
 
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -125,15 +125,26 @@ def deletar_usuario(id: int, session: Session = Depends(get_session)):
         return Mensagem(mensagem="Usuário Excluido!")
 
 
-@app.post('/token')
+@app.post('/token', response_model=Token)
 def get_token(formulario: OAuth2PasswordRequestForm = Depends(), 
               session: Session = Depends(get_session)):
     usuario_bd = session.scalar(select(Usuario).where(Usuario.email == formulario.username))
 
     if not usuario_bd:
         raise HTTPException(
-            status_code=HTTPStatus.UNAUTHORIZED, detail="Usuário não existe!"
+            status_code=HTTPStatus.UNAUTHORIZED, detail="Usuário ou senha incorreta!"
         )
+
+    if not verify_password(formulario.password, usuario_bd.senha):
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED, detail="Usuário ou senha incorreta!"
+        )
+
+    access_token = create_access_token(data={'sub': usuario_bd.email})
+
+    return {'access_token': access_token, 'token_type': 'Bearer'}
+
+
 
     # Usuario existe
     # Verificação da senha

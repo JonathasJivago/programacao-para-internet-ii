@@ -33,6 +33,11 @@ class UsuarioPublic(BaseModel):
     email: EmailStr
 
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
 # usuario = {
 #     'nome': 'Bob',
 #     'email': 'bob@example.com',
