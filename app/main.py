@@ -12,6 +12,10 @@ from app.models import Usuario
 
 from database import get_session
 
+from security import get_password_hash
+
+from fastapi.security import OAuth2PasswordRequestForm
+
 app = FastAPI()
 
 banco = [
@@ -68,7 +72,7 @@ def atualizar_usuario(id: int, usuario: UsuarioSchema, session: Session = Depend
         else:
             usuario_bd.nome = usuario.nome
             usuario_bd.email = usuario.email
-            usuario_bd.senha = usuario.senha
+            usuario_bd.senha = get_password_hash(usuario.senha)
 
             session.add(usuario_bd)
             session.commit()
@@ -91,7 +95,7 @@ def criar_usuario(usuario: UsuarioSchema, session=Depends(get_session)):
         usuario_bd = Usuario(
             nome=usuario.nome,
             email=usuario.email,
-            senha=usuario.senha
+            senha=get_password_hash(usuario.senha)
         )
 
         session.add(usuario_bd)
@@ -120,3 +124,18 @@ def deletar_usuario(id: int, session: Session = Depends(get_session)):
         
         return Mensagem(mensagem="Usuário Excluido!")
 
+
+@app.post('/token')
+def get_token(formulario: OAuth2PasswordRequestForm = Depends(), 
+              session: Session = Depends(get_session)):
+    usuario_bd = session.scalar(select(Usuario).where(Usuario.email == formulario.username))
+
+    if not usuario_bd:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED, detail="Usuário não existe!"
+        )
+
+    # Usuario existe
+    # Verificação da senha
+    # verify (senha_formulario, hash_da_senha_banco)
+    
