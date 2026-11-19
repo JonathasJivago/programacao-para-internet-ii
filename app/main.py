@@ -7,6 +7,7 @@ from schemas import Mensagem, UsuarioBD, UsuarioPublic, UsuarioSchema, Token
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from app.models import Usuario
 
@@ -29,9 +30,13 @@ banco = [
 def home():
     return {'mensagem': 'Hello, World!!!!'}
 
+from security import get_current_user
 
 @app.get('/usuarios', response_model=list[UsuarioPublic])
-def listar_usuarios(session=Depends(get_session)):
+def listar_usuarios(
+    session=Depends(get_session),
+    current_user=Depends(get_current_user)
+    ):
     usuarios = session.scalars(select(Usuario)).all()
     return usuarios
 
@@ -62,26 +67,31 @@ def buscar_usuario_pelo_id(id: int, session=Depends(get_session)):
 
 
 @app.put('/usuarios/{id}', response_model=UsuarioPublic)
-def atualizar_usuario(id: int, usuario: UsuarioSchema, session: Session = Depends(get_session)):
-    usuario_bd = session.scalar(select(Usuario).where(Usuario.id == id))
-    if usuario_bd:
-        if session.scalar(select(Usuario).where(Usuario.email == usuario.email)):
+def atualizar_usuario(
+    id: int, 
+    usuario: UsuarioSchema, 
+    session: Session = Depends(get_session),
+    current_user: Usuario = Depends(get_current_user)
+    ):
+    if current_user.id != id:
+         raise HTTPException(
+             status_code=HTTPStatus.FORBIDDEN, 
+             detail="Você não tem permissões!"
+    )
+
+    try:
+        current_user.nome = usuario.nome
+        current_user.email = usuario.email
+        current_user.senha = get_password_hash(usuario.senha)
+
+        session.add(current_user)
+        session.commit()
+        session.refresh(current_user)
+    except IntegrityError:
             raise HTTPException(
                     status_code=HTTPStatus.CONFLICT, detail='Email já cadastrado!'
-                )
-        else:
-            usuario_bd.nome = usuario.nome
-            usuario_bd.email = usuario.email
-            usuario_bd.senha = get_password_hash(usuario.senha)
-
-            session.add(usuario_bd)
-            session.commit()
-            session.refresh(usuario_bd)
-            return usuario_bd
-    else:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='Usuário não encontrado'
-        )
+            )
+    return current_user
 
 
 @app.post('/usuarios', status_code=HTTPStatus.CREATED, response_model=UsuarioPublic)
@@ -143,10 +153,4 @@ def get_token(formulario: OAuth2PasswordRequestForm = Depends(),
     access_token = create_access_token(data={'sub': usuario_bd.email})
 
     return {'access_token': access_token, 'token_type': 'Bearer'}
-
-
-
-    # Usuario existe
-    # Verificação da senha
-    # verify (senha_formulario, hash_da_senha_banco)
-    
+  

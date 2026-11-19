@@ -5,6 +5,7 @@ from app.main import app
 from sqlalchemy import create_engine
 from app.models import table_registry
 from database import get_session
+from security import get_password_hash
 import pytest
 from sqlalchemy.pool import StaticPool
 from app.models import Usuario
@@ -37,10 +38,16 @@ def session():
 
 @pytest.fixture
 def usuario(session):
-    usuario = Usuario(nome="Bob", email="bob@example.com", senha="12345")
+    senha_em_texto = "12345"
+    usuario = Usuario(
+        nome="Bob", 
+        email="bob@example.com", 
+        senha=get_password_hash(senha_em_texto)
+    )
     session.add(usuario)
     session.commit()
     session.refresh(usuario)
+    usuario.senha_em_texto = senha_em_texto
     return usuario
 
 @pytest.fixture
@@ -59,3 +66,15 @@ def lista(session):
     lista.append(usuario)
 
     return lista
+
+@pytest.fixture
+def token(client, usuario):
+    response = client.post(
+        '/token',
+        data={
+            'username': usuario.email,
+            'password': usuario.senha_em_texto
+        },
+    )
+
+    return response.json()['access_token']
